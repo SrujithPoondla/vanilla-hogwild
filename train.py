@@ -13,11 +13,11 @@ from torch import multiprocessing as mp
 def train(args, model):
 
     # torch.manual_seed(args.seed + rank)
-    dataset = datasets.MNIST('../data', train=True, download=True,
-                    transform=transforms.Compose([
-                        transforms.ToTensor(),
-                        transforms.Normalize((0.1307,), (0.3081,))
-                    ]))
+    # dataset = datasets.MNIST('../data', train=True, download=True,
+    #                 transform=transforms.Compose([
+    #                     transforms.ToTensor(),
+    #                     transforms.Normalize((0.1307,), (0.3081,))
+    #                 ]))
     train_loader = torch.utils.data.DataLoader(
         datasets.MNIST('../data', train=True, download=True,
                     transform=transforms.Compose([

@@ -36,6 +36,7 @@ def train(args, model):
     for batch, (train_data, target_data) in enumerate(train_loader):
         data.append((train_data, target_data))
 
+    epoch_time = 0
     with pymp.Parallel(args.num_processes) as p:
         for epoch in range(2):
             start_time = timeit.default_timer()
@@ -44,8 +45,9 @@ def train(args, model):
                     # processes.append(p)
                 # for p in processes:
                 #     p.join()
+            epoch_time = epoch_time + timeit.default_timer()-start_time
             print('PID{}\tTrain Epoch: {}\t time: {} \tLoss: {:.6f}'.format(os.getpid(),
-                epoch, timeit.default_timer()-start_time, test_epoch(model, test_loader)))
+                epoch, epoch_time, test_epoch(model, test_loader)))
 
 
 # def shuffle_tensor (tensor):

@@ -38,7 +38,7 @@ def train(args, model):
 
     epoch_time = 0
     with pymp.Parallel(args.num_processes) as p:
-        for epoch in range(2):
+        for epoch in range(args.epochs):
             start_time = timeit.default_timer()
             train_data,target_data = data[p.thread_num]
             idx = shuffle_tensor(train_data)

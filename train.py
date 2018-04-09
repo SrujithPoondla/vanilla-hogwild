@@ -49,7 +49,7 @@ def train(args, model):
                 # for p in processes:
                 #     p.join()
             epoch_time = epoch_time + timeit.default_timer()-start_time
-            if p.thread_num is 1:
+            if p.thread_num is 0:
                 print('PID{}\tTrain Epoch: {}\t time: {} \tLoss: {:.6f}'.format(os.getpid(),
                     epoch, epoch_time, test_epoch(model, test_loader)))
 
@@ -69,7 +69,7 @@ def shuffle_tensor(tensor):
 
 def train_process(batch,train_data,target_data,model,args):
     pid = os.getpid()
-    print(str(pid)+"started")
+   # print(str(pid)+"started")
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
     model.train()
     data, target = Variable(train_data), Variable(target_data)

@@ -41,13 +41,17 @@ def train(args, model):
         for epoch in range(2):
             start_time = timeit.default_timer()
             train_data,target_data = data[p.thread_num]
+            idx = shuffle_tensor(train_data)
+            train_data = train_data.index(idx)
+            target_data = target_data.index(idx)
             train_process(p.thread_num,train_data,target_data,model,args)
                     # processes.append(p)
                 # for p in processes:
                 #     p.join()
             epoch_time = epoch_time + timeit.default_timer()-start_time
-            print('PID{}\tTrain Epoch: {}\t time: {} \tLoss: {:.6f}'.format(os.getpid(),
-                epoch, epoch_time, test_epoch(model, test_loader)))
+            if p.thread_num is 1:
+                print('PID{}\tTrain Epoch: {}\t time: {} \tLoss: {:.6f}'.format(os.getpid(),
+                    epoch, epoch_time, test_epoch(model, test_loader)))
 
 
 # def shuffle_tensor (tensor):
@@ -58,6 +62,10 @@ def train(args, model):
 # 	end
 # 	return tensor_shuffled
 # end
+
+def shuffle_tensor(tensor):
+    return torch.randperm(tensor.size(0)).long()
+
 
 def train_process(batch,train_data,target_data,model,args):
     pid = os.getpid()

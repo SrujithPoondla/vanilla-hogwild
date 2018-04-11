@@ -48,14 +48,17 @@ def train(args, model):
             idx = shuffle_tensor(train_data)
             train_data = train_data.index(idx)
             target_data = target_data.index(idx)
-            train_process(p.thread_num,train_data,target_data,model,args,shapes)
+            loss = train_process(p.thread_num,train_data,target_data,model,args,shapes)
                     # processes.append(p)
                 # for p in processes:
                 #     p.join()
             epoch_time = epoch_time + timeit.default_timer()-start_time
             if p.thread_num is 0:
                 print('PID{}\tTrain Epoch: {}\t time: {} \tLoss: {:.6f}'.format(os.getpid(),
-                    epoch, epoch_time, test_epoch(model, test_loader)))
+                    epoch, epoch_time, loss))
+            else:
+                continue
+
 
 
 # def shuffle_tensor (tensor):
@@ -78,12 +81,13 @@ def train_process(batch,train_data,target_data,model,args,shapes):
     model.train()
     data, target = Variable(train_data), Variable(target_data)
     optimizer.zero_grad()
-    set_params(model,get_params_redis(shapes))
+    set_params(model, get_params_redis(shapes))
     output = model(data)
     loss = F.nll_loss(output, target)
     loss.backward()
     optimizer.step()
     push_params_redis(model)
+    return loss.data[0]
 
 
 def train_common(epoch, args, model, data_loader, optimizer):

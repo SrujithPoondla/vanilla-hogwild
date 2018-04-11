@@ -9,6 +9,8 @@ from torch.autograd import Variable
 from torchvision import datasets, transforms
 from torch import multiprocessing as mp
 
+from common_functions import push_params_redis, get_shapes, get_params_redis, set_params
+
 
 def train(args, model):
 
@@ -18,6 +20,8 @@ def train(args, model):
     #                     transforms.ToTensor(),
     #                     transforms.Normalize((0.1307,), (0.3081,))
     #                 ]))
+    shapes = get_shapes(model)
+    push_params_redis(model)
     train_loader = torch.utils.data.DataLoader(
         datasets.MNIST('../data', train=True, download=True,
                     transform=transforms.Compose([
@@ -44,7 +48,7 @@ def train(args, model):
             idx = shuffle_tensor(train_data)
             train_data = train_data.index(idx)
             target_data = target_data.index(idx)
-            train_process(p.thread_num,train_data,target_data,model,args)
+            train_process(p.thread_num,train_data,target_data,model,args,shapes)
                     # processes.append(p)
                 # for p in processes:
                 #     p.join()
@@ -67,17 +71,19 @@ def shuffle_tensor(tensor):
     return torch.randperm(tensor.size(0)).long()
 
 
-def train_process(batch,train_data,target_data,model,args):
+def train_process(batch,train_data,target_data,model,args,shapes):
     pid = os.getpid()
    # print(str(pid)+"started")
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
     model.train()
     data, target = Variable(train_data), Variable(target_data)
     optimizer.zero_grad()
+    set_params(model,get_params_redis(shapes))
     output = model(data)
     loss = F.nll_loss(output, target)
     loss.backward()
     optimizer.step()
+    push_params_redis(model)
 
 
 def train_common(epoch, args, model, data_loader, optimizer):

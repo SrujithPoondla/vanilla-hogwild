@@ -106,8 +106,9 @@ def get_params_redis(db, shapes):
         param = db.execute_command('ML.MATRIX.GET','param_data'+str(i))
         param = param[2:]
         # param_np = pc._loads(param).reshape(shape)
-        param_tensor = torch.nn.Parameter(torch.from_numpy(np.reshape(param, shape).astype(float)))
-        params.append(param_tensor.type(torch.FloatTensor))
+        # param_tensor = torch.nn.Parameter(torch.from_numpy(np.reshape(param, shape).astype(float)))
+        # params.append(param_tensor.type(torch.FloatTensor))
+        params.append(np.reshape(param, shape).astype(float))
     return params
 
 
@@ -118,9 +119,9 @@ def get_shapes(model):
     return shapes
 
 
-def set_params(model, params):
-    for param, new_param in zip(list(model.parameters()), params):
-        param.data = new_param.data
+def set_params(optimizer, params):
+    optimizer.step(grads=params)
+
 
 # def push_params_memcache(model, client):
 #     i = -1

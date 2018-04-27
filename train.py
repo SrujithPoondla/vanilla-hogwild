@@ -89,10 +89,11 @@ def train_process(thread_num,train_data,target_data,model,args,shapes,db):
 
     model.train()
     data, target = Variable(train_data), Variable(target_data)
-    optimizer.zero_grad()
 
     get_params_time = timeit.default_timer()
-    set_params(model, get_params_redis(db, shapes))
+    set_params(optimizer, get_params_redis(db, shapes))
+    optimizer.zero_grad()
+
     # print("Time to get params from redis in thread {}: "+ str(timeit.default_timer()-get_params_time), thread_num)
 
     forward_time = timeit.default_timer()
@@ -104,7 +105,7 @@ def train_process(thread_num,train_data,target_data,model,args,shapes,db):
     loss.backward()
     # print("Time for backward pass in thread {}: "+str(timeit.default_timer()-backward_time),thread_num)
 
-    optimizer.step()
+    # optimizer.step()
     push_params_time = timeit.default_timer()
     push_params_redis(optimizer, db)
     # print("Time to push params to redis in thread {}:"+ str(timeit.default_timer()-push_params_time), thread_num)

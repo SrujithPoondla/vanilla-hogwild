@@ -8,20 +8,22 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from torchvision import datasets, transforms
 from torch import multiprocessing as mp
+import redis
 
 from common_functions import push_params_redis, get_shapes, get_params_redis, set_params
 
 
 def train(args, model):
+    db = redis.ConnectionPool(host='localhost', port=6379, db=0)
+    db = redis.StrictRedis(connection_pool=db)
 
-    # torch.manual_seed(args.seed + rank)
-    # dataset = datasets.MNIST('../data', train=True, download=True,
-    #                 transform=transforms.Compose([
-    #                     transforms.ToTensor(),
-    #                     transforms.Normalize((0.1307,), (0.3081,))
-    #                 ]))
+    start_time = timeit.default_timer()
+    push_time = timeit.default_timer()
+    push_params_redis(model, db)
+    print("Time to get model from redis: "+str(timeit.default_timer()-push_time))
     shapes = get_shapes(model)
-    push_params_redis(model)
+
+
     train_loader = torch.utils.data.DataLoader(
         datasets.MNIST('../data', train=True, download=True,
                     transform=transforms.Compose([
@@ -35,27 +37,33 @@ def train(args, model):
                         transforms.Normalize((0.1307,), (0.3081,))
                     ])),
         num_processes=args.num_processes, shuffle=True, num_workers=1)
-    processes = []
+
+    # Dividing data to features and labels
     data =[]
     for batch, (train_data, target_data) in enumerate(train_loader):
         data.append((train_data, target_data))
 
-    epoch_time = 0
+    # Print total number of processes
+    print(args.num_processes)
+
+    # Using pymp to parallelise the training
     with pymp.Parallel(args.num_processes) as p:
         for epoch in range(args.epochs):
-            start_time = timeit.default_timer()
+            print(os.getpid())
+            epoch_start_time = timeit.default_timer()
             train_data,target_data = data[p.thread_num]
+            shuffle_time = timeit.default_timer()
             idx = shuffle_tensor(train_data)
             train_data = train_data.index(idx)
             target_data = target_data.index(idx)
-            train_process(p.thread_num,train_data,target_data,model,args,shapes)
+            # print("Time to shuffle data: "+str(timeit.default_timer()-shuffle_time))
+            loss = train_process(p.thread_num,train_data,target_data,model,args,shapes,db)
                     # processes.append(p)
                 # for p in processes:
                 #     p.join()
-            epoch_time = epoch_time + timeit.default_timer()-start_time
-            if p.thread_num is 0:
-                print('PID{}\tTrain Epoch: {}\t time: {} \tLoss: {:.6f}'.format(os.getpid(),
-                    epoch, epoch_time, test_epoch(model, test_loader)))
+            epoch_time = timeit.default_timer() - epoch_start_time
+            if p.thread_num:
+                print('PID{}\tTrain Epoch: {}\t time: {} \tLoss: {:.6f}'.format(p.thread_num, epoch, epoch_time, loss))
 
 
 # def shuffle_tensor (tensor):
@@ -71,19 +79,24 @@ def shuffle_tensor(tensor):
     return torch.randperm(tensor.size(0)).long()
 
 
-def train_process(batch,train_data,target_data,model,args,shapes):
+def train_process(batch,train_data,target_data,model,args,shapes,db):
     pid = os.getpid()
    # print(str(pid)+"started")
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
     model.train()
     data, target = Variable(train_data), Variable(target_data)
     optimizer.zero_grad()
-    set_params(model,get_params_redis(shapes))
+    get_params_time = timeit.default_timer()
+    set_params(model, get_params_redis(db, shapes))
+    print("Time to get params from redis: "+ str(timeit.default_timer()-get_params_time))
     output = model(data)
     loss = F.nll_loss(output, target)
     loss.backward()
     optimizer.step()
-    push_params_redis(model)
+    push_params_time = timeit.default_timer()
+    push_params_redis(model, db)
+    print("Time to push params to redis:"+ str(timeit.default_timer()-push_params_time))
+    return loss.data[0]
 
 
 def train_common(epoch, args, model, data_loader, optimizer):

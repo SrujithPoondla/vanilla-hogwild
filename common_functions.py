@@ -5,7 +5,7 @@ import torch
 
 
 async def multi_set_key_redis(keys,values):
-    redis = await aioredis.create_redis(
+    redis = await aioredis.create_redis_pool(
         'redis://localhost')
 
     async def transaction():
@@ -30,53 +30,53 @@ async def multi_get_key_redis(keys):
     return result
 
 
-def push_params_redis(model):
-    i = -1
-    keys=[]
-    values=[]
-    for param in list(model.parameters()):
-        i = i+1
-        param_data = param.data.numpy()
-        p = pc._dumps(param_data, protocol=pc.HIGHEST_PROTOCOL)
-        keys.append(i)
-        values.append(p)
-    asyncio.get_event_loop().run_until_complete(multi_set_key_redis(keys,values))
-
-
-def get_params_redis(shapes):
-    i = -1
-    params=[]
-    keys = []
-    for s in range(len(shapes)):
-        keys.append(s)
-    values = asyncio.get_event_loop().run_until_complete(multi_get_key_redis(keys))
-    for shape in shapes:
-        i = i + 1
-        param_np = pc._loads(values[i]).reshape(shape)
-        param_tensor = torch.nn.Parameter(torch.from_numpy(param_np))
-        params.append(param_tensor)
-    return params
-
-
-# def push_params_redis(model,db):
+# def push_params_redis(model):
 #     i = -1
+#     keys=[]
+#     values=[]
 #     for param in list(model.parameters()):
 #         i = i+1
 #         param_data = param.data.numpy()
 #         p = pc._dumps(param_data, protocol=pc.HIGHEST_PROTOCOL)
-#         db.set(i, p)
+#         keys.append(i)
+#         values.append(p)
+#     asyncio.get_event_loop().run_until_complete(multi_set_key_redis(keys,values))
 #
 #
-# def get_params_redis(db, shapes):
+# def get_params_redis(shapes):
 #     i = -1
 #     params=[]
+#     keys = []
+#     for s in range(len(shapes)):
+#         keys.append(s)
+#     values = asyncio.get_event_loop().run_until_complete(multi_get_key_redis(keys))
 #     for shape in shapes:
 #         i = i + 1
-#         param = db.get(i)
-#         param_np = pc._loads(param).reshape(shape)
+#         param_np = pc._loads(values[i]).reshape(shape)
 #         param_tensor = torch.nn.Parameter(torch.from_numpy(param_np))
 #         params.append(param_tensor)
 #     return params
+
+
+def push_params_redis(model,db):
+    i = -1
+    for param in list(model.parameters()):
+        i = i+1
+        param_data = param.data.numpy()
+        p = pc._dumps(param_data, protocol=pc.HIGHEST_PROTOCOL)
+        db.set(i, p)
+
+
+def get_params_redis(db, shapes):
+    i = -1
+    params=[]
+    for shape in shapes:
+        i = i + 1
+        param = db.get(i)
+        param_np = pc._loads(param).reshape(shape)
+        param_tensor = torch.nn.Parameter(torch.from_numpy(param_np))
+        params.append(param_tensor)
+    return params
 
 
 def get_shapes(model):

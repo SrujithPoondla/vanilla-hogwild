@@ -49,7 +49,6 @@ def train(args, model):
     # Using pymp to parallelise the training
     with pymp.Parallel(args.num_processes) as p:
         for epoch in range(args.epochs):
-            print(os.getpid())
             epoch_start_time = timeit.default_timer()
             train_data,target_data = data[p.thread_num]
             shuffle_time = timeit.default_timer()
@@ -79,27 +78,29 @@ def shuffle_tensor(tensor):
     return torch.randperm(tensor.size(0)).long()
 
 
-def train_process(batch,train_data,target_data,model,args,shapes,db):
-    pid = os.getpid()
-   # print(str(pid)+"started")
+def train_process(thread_num,train_data,target_data,model,args,shapes,db):
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
     model.train()
     data, target = Variable(train_data), Variable(target_data)
     optimizer.zero_grad()
+
     get_params_time = timeit.default_timer()
     set_params(model, get_params_redis(db, shapes))
-    print("Time to get params from redis: "+ str(timeit.default_timer()-get_params_time))
+    print("Time to get params from redis in thread {}: "+ str(timeit.default_timer()-get_params_time), thread_num)
+
     forward_time = timeit.default_timer()
     output = model(data)
-    print("Time to do forward pass: "+ str(timeit.default_timer()-forward_time))
+    print("Time to do forward pass in thread {}: "+ str(timeit.default_timer()-forward_time),thread_num)
+
     loss = F.nll_loss(output, target)
     backward_time = timeit.default_timer()
     loss.backward()
-    print("Time for backward pass: "+str(timeit.default_timer()-backward_time))
+    print("Time for backward pass in thread {}: "+str(timeit.default_timer()-backward_time),thread_num)
+
     optimizer.step()
     push_params_time = timeit.default_timer()
     push_params_redis(model, db)
-    print("Time to push params to redis:"+ str(timeit.default_timer()-push_params_time))
+    print("Time to push params to redis in thread {}:"+ str(timeit.default_timer()-push_params_time), thread_num)
     return loss.data[0]
 
 

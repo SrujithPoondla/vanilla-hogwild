@@ -80,21 +80,22 @@ def push_params_redis_init(model, db):
 
 def push_params_redis(model,db):
     i = -1
-    for param in list(model.parameters()):
-        i = i+1
-        param_data = param.grad.data.numpy()
-        # p = pc._dumps(param_data, protocol=pc.HIGHEST_PROTOCOL)
-        param_data = param_data.flatten()
-        param_shape = param_data.shape
-        param_data = param_data.tolist()
-        param_data.insert(0, param_shape[0])
-        if len(param_shape) > 1:
-            param_data.insert(0, param_shape[1])
-        else:
-            param_data.insert(0,1)
-        db.execute_command('ML.MATRIX.SET', 'param_temp'+str(i), *param_data)
-        db.execute_command('ML.MATRIX.ADD', 'param_data'+str(i), 'param_temp'+str(i), 'param_data'+str(i))
-        # db.set(i, param_data)
+    for group in model.param_groups:
+        for param in group['params']:
+            i = i+1
+            param_data = param.grad.data.numpy()
+            # p = pc._dumps(param_data, protocol=pc.HIGHEST_PROTOCOL)
+            param_data = param_data.flatten()
+            param_shape = param_data.shape
+            param_data = param_data.tolist()
+            param_data.insert(0, param_shape[0])
+            if len(param_shape) > 1:
+                param_data.insert(0, param_shape[1])
+            else:
+                param_data.insert(0,1)
+            db.execute_command('ML.MATRIX.SET', 'param_temp'+str(i), *param_data)
+            db.execute_command('ML.MATRIX.ADD', 'param_data'+str(i), 'param_temp'+str(i), 'param_data'+str(i))
+            # db.set(i, param_data)
 
 
 def get_params_redis(db, shapes):

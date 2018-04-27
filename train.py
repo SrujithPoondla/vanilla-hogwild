@@ -86,6 +86,7 @@ def shuffle_tensor(tensor):
 
 def train_process(thread_num,train_data,target_data,model,args,shapes,db):
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
+
     model.train()
     data, target = Variable(train_data), Variable(target_data)
     optimizer.zero_grad()

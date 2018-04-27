@@ -2,6 +2,7 @@ import aioredis
 import pickle as pc
 import asyncio
 import torch
+import numpy as np
 
 
 async def multi_set_key_redis(keys,values):
@@ -58,13 +59,43 @@ async def multi_get_key_redis(keys):
 #     return params
 
 
-def push_params_redis(model,db):
+def push_params_redis_zero(model, db):
     i = -1
     for param in list(model.parameters()):
         i = i+1
         param_data = param.data.numpy()
-        p = pc._dumps(param_data, protocol=pc.HIGHEST_PROTOCOL)
-        db.set(i, p)
+        param_data = np.zeros_like(param_data)
+        # p = pc._dumps(param_data, protocol=pc.HIGHEST_PROTOCOL)
+        param_data = param_data.flatten()
+        param_shape = param_data.shape
+        param_data = param_data.tolist()
+        param_data.insert(0, param_shape[0])
+        if len(param_shape) > 1:
+            param_data.insert(0, param_shape[1])
+        else:
+            param_data.insert(0,1)
+        db.execute_command('ML.MATRIX.SET', 'param_data'+str(i), *param_data)
+        # db.execute_command('ML.MATRIX.ADD', 'param_data', 'param_temp', 'param_data')
+        # db.set(i, param_data)
+
+
+def push_params_redis(model,db):
+    i = -1
+    for param in list(model.parameters()):
+        i = i+1
+        param_data = param.grad.data.numpy()
+        # p = pc._dumps(param_data, protocol=pc.HIGHEST_PROTOCOL)
+        param_data = param_data.flatten()
+        param_shape = param_data.shape
+        param_data = param_data.tolist()
+        param_data.insert(0, param_shape[0])
+        if len(param_shape) > 1:
+            param_data.insert(0, param_shape[1])
+        else:
+            param_data.insert(0,1)
+        db.execute_command('ML.MATRIX.SET', 'param_temp'+str(i), *param_data)
+        db.execute_command('ML.MATRIX.ADD', 'param_data'+str(i), 'param_temp'+str(i), 'param_data'+str(i))
+        # db.set(i, param_data)
 
 
 def get_params_redis(db, shapes):
@@ -72,10 +103,11 @@ def get_params_redis(db, shapes):
     params=[]
     for shape in shapes:
         i = i + 1
-        param = db.get(i)
-        param_np = pc._loads(param).reshape(shape)
-        param_tensor = torch.nn.Parameter(torch.from_numpy(param_np))
-        params.append(param_tensor)
+        param = db.execute_command('ML.MATRIX.GET','param_data'+str(i))
+        param = param[2:]
+        # param_np = pc._loads(param).reshape(shape)
+        param_tensor = torch.nn.Parameter(torch.from_numpy(np.reshape(param, shape).astype(float)))
+        params.append(param_tensor.type(torch.FloatTensor))
     return params
 
 

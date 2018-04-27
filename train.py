@@ -9,18 +9,23 @@ from torch.autograd import Variable
 from torchvision import datasets, transforms
 from torch import multiprocessing as mp
 import redis
+from redis import StrictRedis
+from rediscluster import StrictRedisCluster
 
-from common_functions import push_params_redis, get_shapes, get_params_redis, set_params
+from common_functions import push_params_redis, get_shapes, get_params_redis, set_params, push_params_redis_zero
 
 
 def train(args, model):
+    # startup_nodes = [{"host": "127.0.0.1", "port": "30001"},{"host": "127.0.0.1", "port": "30002"}]
     db = redis.ConnectionPool(host='localhost', port=6379, db=0)
     db = redis.StrictRedis(connection_pool=db)
+    # db = StrictRedisCluster(startup_nodes=startup_nodes, decode_responses=True)
 
     start_time = timeit.default_timer()
     push_time = timeit.default_timer()
+    push_params_redis_zero(model,db)
     push_params_redis(model, db)
-    print("Time to get model from redis: "+str(timeit.default_timer()-push_time))
+    # print("Time to get model from redis: "+str(timeit.default_timer()-push_time))
     shapes = get_shapes(model)
 
 
@@ -55,12 +60,12 @@ def train(args, model):
             idx = shuffle_tensor(train_data)
             train_data = train_data.index(idx)
             target_data = target_data.index(idx)
-            print("Time to shuffle data: "+str(timeit.default_timer()-shuffle_time))
+            # print("Time to shuffle data: "+str(timeit.default_timer()-shuffle_time))
             loss = train_process(p.thread_num,train_data,target_data,model,args,shapes,db)
                     # processes.append(p)
                 # for p in processes:
                 #     p.join()
-            epoch_time = timeit.default_timer() - epoch_start_time
+            epoch_time = epoch_time + timeit.default_timer() - epoch_start_time
             if p.thread_num:
                 print('PID{}\tTrain Epoch: {}\t time: {} \tLoss: {:.6f}'.format(p.thread_num, epoch, epoch_time, loss))
 
@@ -86,21 +91,21 @@ def train_process(thread_num,train_data,target_data,model,args,shapes,db):
 
     get_params_time = timeit.default_timer()
     set_params(model, get_params_redis(db, shapes))
-    print("Time to get params from redis in thread {}: "+ str(timeit.default_timer()-get_params_time), thread_num)
+    # print("Time to get params from redis in thread {}: "+ str(timeit.default_timer()-get_params_time), thread_num)
 
     forward_time = timeit.default_timer()
     output = model(data)
-    print("Time to do forward pass in thread {}: "+ str(timeit.default_timer()-forward_time),thread_num)
+    # print("Time to do forward pass in thread {}: "+ str(timeit.default_timer()-forward_time),thread_num)
 
     loss = F.nll_loss(output, target)
     backward_time = timeit.default_timer()
     loss.backward()
-    print("Time for backward pass in thread {}: "+str(timeit.default_timer()-backward_time),thread_num)
+    # print("Time for backward pass in thread {}: "+str(timeit.default_timer()-backward_time),thread_num)
 
     optimizer.step()
     push_params_time = timeit.default_timer()
     push_params_redis(model, db)
-    print("Time to push params to redis in thread {}:"+ str(timeit.default_timer()-push_params_time), thread_num)
+    # print("Time to push params to redis in thread {}:"+ str(timeit.default_timer()-push_params_time), thread_num)
     return loss.data[0]
 
 

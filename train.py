@@ -106,7 +106,7 @@ def train_process(thread_num,train_data,target_data,model,args,shapes,db):
 
     optimizer.step()
     push_params_time = timeit.default_timer()
-    push_params_redis(model, db)
+    push_params_redis(optimizer, db)
     # print("Time to push params to redis in thread {}:"+ str(timeit.default_timer()-push_params_time), thread_num)
     return loss.data[0]
 

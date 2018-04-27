@@ -78,9 +78,9 @@ def push_params_redis_init(model, db):
         # db.set(i, param_data)
 
 
-def push_params_redis(model,db):
+def push_params_redis(optimizer, db):
     i = -1
-    for group in model.param_groups:
+    for group in optimizer.param_groups:
         for param in group['params']:
             i = i+1
             param_data = param.grad.data.numpy()

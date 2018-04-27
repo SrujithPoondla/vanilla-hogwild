@@ -12,7 +12,7 @@ import redis
 from redis import StrictRedis
 from rediscluster import StrictRedisCluster
 
-from common_functions import push_params_redis, get_shapes, get_params_redis, set_params, push_params_redis_zero
+from common_functions import push_params_redis, get_shapes, get_params_redis, set_params, push_params_redis_init
 
 
 def train(args, model):
@@ -23,8 +23,8 @@ def train(args, model):
 
     start_time = timeit.default_timer()
     push_time = timeit.default_timer()
-    push_params_redis_zero(model,db)
-    push_params_redis(model, db)
+    push_params_redis_init(model,db)
+    # push_params_redis(model, db)
     # print("Time to get model from redis: "+str(timeit.default_timer()-push_time))
     shapes = get_shapes(model)
 
@@ -52,6 +52,7 @@ def train(args, model):
     print(args.num_processes)
 
     # Using pymp to parallelise the training
+    epoch_time = 0
     with pymp.Parallel(args.num_processes) as p:
         for epoch in range(args.epochs):
             epoch_start_time = timeit.default_timer()
@@ -65,8 +66,8 @@ def train(args, model):
                     # processes.append(p)
                 # for p in processes:
                 #     p.join()
-            epoch_time = epoch_time + timeit.default_timer() - epoch_start_time
-            if p.thread_num:
+            epoch_time = epoch_time+ timeit.default_timer() - epoch_start_time
+            if p.thread_num is 1:
                 print('PID{}\tTrain Epoch: {}\t time: {} \tLoss: {:.6f}'.format(p.thread_num, epoch, epoch_time, loss))
 
 

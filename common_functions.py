@@ -59,12 +59,11 @@ async def multi_get_key_redis(keys):
 #     return params
 
 
-def push_params_redis_zero(model, db):
+def push_params_redis_init(model, db):
     i = -1
     for param in list(model.parameters()):
         i = i+1
         param_data = param.data.numpy()
-        param_data = np.zeros_like(param_data)
         # p = pc._dumps(param_data, protocol=pc.HIGHEST_PROTOCOL)
         param_data = param_data.flatten()
         param_shape = param_data.shape

@@ -16,10 +16,10 @@ from common_functions import push_params_redis, get_shapes, get_params_redis, se
 
 
 def train(args, model):
-    # startup_nodes = [{"host": "127.0.0.1", "port": "30001"},{"host": "127.0.0.1", "port": "30002"}]
-    db = redis.ConnectionPool(host='localhost', port=6379, db=0)
-    db = redis.StrictRedis(connection_pool=db)
-    # db = StrictRedisCluster(startup_nodes=startup_nodes, decode_responses=True)
+    startup_nodes = [{"host": "127.0.0.1", "port": "30001"},{"host": "127.0.0.1", "port": "30002"}]
+    # db = redis.ConnectionPool(host='localhost', port=6379, db=0)
+    # db = redis.StrictRedis(connection_pool=db)
+    db = StrictRedisCluster(startup_nodes=startup_nodes, decode_responses=True)
 
     start_time = timeit.default_timer()
     push_time = timeit.default_timer()
@@ -67,7 +67,7 @@ def train(args, model):
                 # for p in processes:
                 #     p.join()
             epoch_time = epoch_time+ timeit.default_timer() - epoch_start_time
-            if p.thread_num is 1:
+            if p.thread_num :
                 print('PID{}\tTrain Epoch: {}\t time: {} \tLoss: {:.6f}'.format(p.thread_num, epoch, epoch_time, loss))
 
 

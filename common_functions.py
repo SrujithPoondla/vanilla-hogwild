@@ -94,7 +94,8 @@ def push_params_redis(optimizer, db):
             else:
                 param_data.insert(0,1)
             db.execute_command('ML.MATRIX.SET', 'param_temp'+str(i), *param_data)
-            db.execute_command('ML.MATRIX.ADD', 'param_data'+str(i), 'param_temp'+str(i), 'param_data'+str(i))
+            # param_data.insert(0, 'param_data'+str(i))
+            db.execute_command('ML.MATRIX.ADD', 'param_data'+str(i), 'param_data'+str(i), *param_data)
             # db.set(i, param_data)
 
 

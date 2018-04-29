@@ -12,41 +12,44 @@ import redis
 from redis import StrictRedis
 from rediscluster import StrictRedisCluster
 
-from common_functions import push_params_redis, get_shapes, get_params_redis, set_params, push_params_redis_init
+from common_functions import push_params_redis, get_shapes, get_params_redis, set_params, push_params_redis_init,\
+    check_param_exists
 
 
 def train(args, model):
-    startup_nodes = [{"host": "127.0.0.1", "port": "30001"},{"host": "127.0.0.1", "port": "30002"}]
-    # db = redis.ConnectionPool(host='localhost', port=6379, db=0)
-    # db = redis.StrictRedis(connection_pool=db)
-    db = StrictRedisCluster(startup_nodes=startup_nodes, decode_responses=True)
+    # startup_nodes = [{"host": "127.0.0.1", "port": "30001"},{"host": "127.0.0.1", "port": "30002"}]
+    db = redis.ConnectionPool(host='localhost', port=6379, db=0)
+    db = redis.StrictRedis(connection_pool=db)
+    # db = StrictRedisCluster(startup_nodes=startup_nodes, decode_responses=True)
 
-    start_time = timeit.default_timer()
-    push_time = timeit.default_timer()
-    push_params_redis_init(model,db)
+    # start_time = timeit.default_timer()
+    # push_time = timeit.default_timer()
+    params_exists = check_param_exists(model,db)
+    if not params_exists:
+        push_params_redis_init(model,db)
     # push_params_redis(model, db)
     # print("Time to get model from redis: "+str(timeit.default_timer()-push_time))
     shapes = get_shapes(model)
 
 
-    train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('../data', train=True, download=True,
-                    transform=transforms.Compose([
-                        transforms.ToTensor(),
-                        transforms.Normalize((0.1307,), (0.3081,))
-                    ])),
-        num_processes=args.num_processes, shuffle=True, num_workers=1)
-    test_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('../data', train=False, transform=transforms.Compose([
-                        transforms.ToTensor(),
-                        transforms.Normalize((0.1307,), (0.3081,))
-                    ])),
-        num_processes=args.num_processes, shuffle=True, num_workers=1)
-
-    # Dividing data to features and labels
-    data =[]
-    for batch, (train_data, target_data) in enumerate(train_loader):
-        data.append((train_data, target_data))
+    # train_loader = torch.utils.data.DataLoader(
+    #     datasets.MNIST('../data', train=True, download=True,
+    #                 transform=transforms.Compose([
+    #                     transforms.ToTensor(),
+    #                     transforms.Normalize((0.1307,), (0.3081,))
+    #                 ])),
+    #     num_processes=args.num_processes, shuffle=True, num_workers=1)
+    # test_loader = torch.utils.data.DataLoader(
+    #     datasets.MNIST('../data', train=False, transform=transforms.Compose([
+    #                     transforms.ToTensor(),
+    #                     transforms.Normalize((0.1307,), (0.3081,))
+    #                 ])),
+    #     num_processes=args.num_processes, shuffle=True, num_workers=1)
+    #
+    # # Dividing data to features and labels
+    # data =[]
+    # for batch, (train_data, target_data) in enumerate(train_loader):
+    #     data.append((train_data, target_data))
 
     # Print total number of processes
     print(args.num_processes)
@@ -54,21 +57,36 @@ def train(args, model):
     # Using pymp to parallelise the training
     epoch_time = 0
     with pymp.Parallel(args.num_processes) as p:
+        train_loader = torch.utils.data.DataLoader(
+            datasets.MNIST('../data', train=True, download=True,
+                           transform=transforms.Compose([
+                               transforms.ToTensor(),
+                               transforms.Normalize((0.1307,), (0.3081,))
+                           ])),
+            batch_size=args.batch_size, shuffle=True, num_workers=1)
+        test_loader = torch.utils.data.DataLoader(
+            datasets.MNIST('../data', train=False, transform=transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize((0.1307,), (0.3081,))
+            ])),
+            batch_size=args.batch_size, shuffle=True, num_workers=1)
+        optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
         for epoch in range(args.epochs):
             epoch_start_time = timeit.default_timer()
-            train_data,target_data = data[p.thread_num]
-            shuffle_time = timeit.default_timer()
-            idx = shuffle_tensor(train_data)
-            train_data = train_data.index(idx)
-            target_data = target_data.index(idx)
+            # train_data,target_data = data[p.thread_num]
+            # shuffle_time = timeit.default_timer()
+            # idx = shuffle_tensor(train_data)
+            # train_data = train_data.index(idx)
+            # target_data = target_data.index(idx)
             # print("Time to shuffle data: "+str(timeit.default_timer()-shuffle_time))
-            loss = train_process(p.thread_num,train_data,target_data,model,args,shapes,db)
+            loss = train_process(p.thread_num, optimizer, train_loader, model, args, shapes, db ,epoch)
                     # processes.append(p)
                 # for p in processes:
                 #     p.join()
             epoch_time = epoch_time+ timeit.default_timer() - epoch_start_time
-            if p.thread_num :
-                print('PID{}\tTrain Epoch: {}\t time: {} \tLoss: {:.6f}'.format(p.thread_num, epoch, epoch_time, loss))
+            # if p.thread_num :
+            print('PID{}\tTrain Epoch: {}\t time: {} \tLoss: {:.6f}'.format(p.thread_num, epoch, epoch_time, loss))
+            # test_epoch(model, test_loader)
 
 
 # def shuffle_tensor (tensor):
@@ -84,31 +102,37 @@ def shuffle_tensor(tensor):
     return torch.randperm(tensor.size(0)).long()
 
 
-def train_process(thread_num,train_data,target_data,model,args,shapes,db):
-    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
+def train_process(thread_num, optimizer, train_loader,model,args,shapes,db,epoch):
+
+
 
     model.train()
-    data, target = Variable(train_data), Variable(target_data)
+    # data, target = Variable(train_data), Variable(target_data)
 
-    get_params_time = timeit.default_timer()
+    # get_params_time = timeit.default_timer()
     set_params(optimizer, get_params_redis(db, shapes))
-    optimizer.zero_grad()
+    for batch_idx, (data, target) in enumerate(train_loader):
+        optimizer.zero_grad()
 
-    # print("Time to get params from redis in thread {}: "+ str(timeit.default_timer()-get_params_time), thread_num)
+        # print("Time to get params from redis in thread {}: "+ str(timeit.default_timer()-get_params_time), thread_num)
 
-    forward_time = timeit.default_timer()
-    output = model(data)
-    # print("Time to do forward pass in thread {}: "+ str(timeit.default_timer()-forward_time),thread_num)
+        # forward_time = timeit.default_timer()
+        output = model(data)
+        # print("Time to do forward pass in thread {}: "+ str(timeit.default_timer()-forward_time),thread_num)
 
-    loss = F.nll_loss(output, target)
-    backward_time = timeit.default_timer()
-    loss.backward()
-    # print("Time for backward pass in thread {}: "+str(timeit.default_timer()-backward_time),thread_num)
+        loss = F.nll_loss(output, target)
+        # backward_time = timeit.default_timer()
+        loss.backward()
+        # print("Time for backward pass in thread {}: "+str(timeit.default_timer()-backward_time),thread_num)
 
-    # optimizer.step()
-    push_params_time = timeit.default_timer()
-    push_params_redis(optimizer, db)
-    # print("Time to push params to redis in thread {}:"+ str(timeit.default_timer()-push_params_time), thread_num)
+        # optimizer.step()
+        # push_params_time = timeit.default_timer()
+        push_params_redis(optimizer, db)
+        # if batch_idx % args.log_interval == 0:
+        #     print('{}\tTrain Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+        #         thread_num, epoch, batch_idx * len(data), len(train_loader.dataset),
+        #                     100. * batch_idx / len(train_loader), loss.item()))
+        # print("Time to push params to redis in thread {}:"+ str(timeit.default_timer()-push_params_time), thread_num)
     return loss.data[0]
 
 

@@ -59,6 +59,13 @@ async def multi_get_key_redis(keys):
 #     return params
 
 
+def check_param_exists(model,db):
+    if db.execute_command('exists','param_data0'):
+        return True
+    else:
+        return False
+
+
 def push_params_redis_init(model, db):
     i = -1
     for param in list(model.parameters()):
@@ -93,7 +100,7 @@ def push_params_redis(optimizer, db):
                 param_data.insert(0, param_shape[1])
             else:
                 param_data.insert(0,1)
-            db.execute_command('ML.MATRIX.SET', 'param_temp'+str(i), *param_data)
+            # db.execute_command('ML.MATRIX.SET', 'param_temp'+str(i), *param_data)
             # param_data.insert(0, 'param_data'+str(i))
             db.execute_command('ML.MATRIX.ADD', 'param_data'+str(i), 'param_data'+str(i), *param_data)
             # db.set(i, param_data)

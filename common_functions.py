@@ -85,25 +85,24 @@ def push_params_redis_init(model, db):
         # db.set(i, param_data)
 
 
-def push_params_redis(optimizer, db):
+def push_params_redis(params, db):
     i = -1
-    for group in optimizer.param_groups:
-        for param in group['params']:
-            i = i+1
-            param_data = param.grad.data.numpy()
-            # p = pc._dumps(param_data, protocol=pc.HIGHEST_PROTOCOL)
-            param_data = param_data.flatten()
-            param_shape = param_data.shape
-            param_data = param_data.tolist()
-            param_data.insert(0, param_shape[0])
-            if len(param_shape) > 1:
-                param_data.insert(0, param_shape[1])
-            else:
-                param_data.insert(0,1)
-            # db.execute_command('ML.MATRIX.SET', 'param_temp'+str(i), *param_data)
-            # param_data.insert(0, 'param_data'+str(i))
-            db.execute_command('ML.MATRIX.ADD', 'param_data'+str(i), 'param_data'+str(i), *param_data)
-            # db.set(i, param_data)
+    for param in params:
+        i = i+1
+        param_data = param.numpy()
+        # p = pc._dumps(param_data, protocol=pc.HIGHEST_PROTOCOL)
+        param_data = param_data.flatten()
+        param_shape = param_data.shape
+        param_data = param_data.tolist()
+        param_data.insert(0, param_shape[0])
+        if len(param_shape) > 1:
+            param_data.insert(0, param_shape[1])
+        else:
+            param_data.insert(0,1)
+        # db.execute_command('ML.MATRIX.SET', 'param_temp'+str(i), *param_data)
+        # param_data.insert(0, 'param_data'+str(i))
+        db.execute_command('ML.MATRIX.ADD', 'param_data'+str(i), 'param_data'+str(i), *param_data)
+        # db.set(i, param_data)
 
 
 def get_params_redis(db, shapes):
@@ -128,7 +127,9 @@ def get_shapes(model):
 
 
 def set_params(optimizer, params):
-    optimizer.step(grads=params)
+    for group in optimizer.param_groups:
+        for i, p in enumerate(group['params']):
+            p.data = torch.from_numpy(params[i]).float()
 
 
 # def push_params_memcache(model, client):

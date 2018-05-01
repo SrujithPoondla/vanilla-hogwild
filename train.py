@@ -3,13 +3,10 @@ import timeit
 import time
 import pymp
 import torch
-import torch.optim as optim
 import torch.nn.functional as F
 from torch.autograd import Variable
 from torchvision import datasets, transforms
-from torch import multiprocessing as mp
-import redis
-from redis import StrictRedis
+from sgd import SGD
 from rediscluster import StrictRedisCluster
 
 from common_functions import push_params_redis, get_shapes, get_params_redis, set_params, push_params_redis_init, \
@@ -17,10 +14,12 @@ from common_functions import push_params_redis, get_shapes, get_params_redis, se
 
 
 def train(args, model):
-    # startup_nodes = [{"host": "127.0.0.1", "port": "30001"},{"host": "127.0.0.1", "port": "30002"}]
-    # db = StrictRedisCluster(startup_nodes=startup_nodes, decode_responses=True)
-    db = redis.ConnectionPool(host='localhost', port=6379, db=0)
-    db = redis.StrictRedis(connection_pool=db)
+    startup_nodes = []
+    for node in args.hosts.split(' '):
+        startup_nodes.append({'host': str(node.split(':')[0]), "port": "6379"})
+    db = StrictRedisCluster(startup_nodes=startup_nodes, decode_responses=True)
+    # db = redis.ConnectionPool(host='localhost', port=6379, db=0)
+    # db = redis.StrictRedis(connection_pool=db)
 
     params_exists = check_param_exists(model, db)
     if not params_exists:
@@ -33,21 +32,30 @@ def train(args, model):
     # Using pymp to parallelise the training
     epoch_start_time = 0
     with pymp.Parallel(args.num_processes) as p:
-        train_loader = torch.utils.data.DataLoader(
-            datasets.MNIST('../data', train=True, download=True,
-                           transform=transforms.Compose([
-                               transforms.ToTensor(),
-                               transforms.Normalize((0.1307,), (0.3081,))
-                           ])),
-            batch_size=args.batch_size, shuffle=True, num_workers=1)
-        test_loader = torch.utils.data.DataLoader(
-            datasets.MNIST('../data', train=False, transform=transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Normalize((0.1307,), (0.3081,))
-            ])),
-            batch_size=args.batch_size, shuffle=True, num_workers=1)
+        # load training and test set here:
+        if args.dataset == "MNIST":
+            training_set = datasets.MNIST('./mnist_data', train=True, download=True,
+                                          transform=transforms.Compose([
+                                              transforms.ToTensor(),
+                                              transforms.Normalize((0.1307,), (0.3081,))]))
+            train_loader = torch.utils.data.DataLoader(training_set, batch_size=args.batch_size, shuffle=True)
+            test_loader = torch.utils.data.DataLoader(
+                datasets.MNIST('./mnist_data', train=False, transform=transforms.Compose([
+                    transforms.ToTensor(),
+                    transforms.Normalize((0.1307,), (0.3081,))
+                ])), batch_size=args.test_batch_size, shuffle=True)
+        elif args.dataset == "Cifar10":
+            trainset = datasets.CIFAR10(root='./cifar10_data', train=True,
+                                        download=True, transform=transforms.ToTensor())
+            train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
+                                                       shuffle=True)
+            test_loader = torch.utils.data.DataLoader(
+                datasets.CIFAR10('./cifar10_data', train=False, transform=transforms.Compose([
+                    transforms.ToTensor()
+                ])), batch_size=args.test_batch_size, shuffle=True)
+
         # Optimizer declaration
-        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
+        optimizer = SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
         if not p.thread_num:
             time.sleep(20)
 
@@ -111,7 +119,7 @@ def test_epoch(model, data_loader):
     for data, target in data_loader:
         data, target = Variable(data, volatile=True), Variable(target)
         output = model(data)
-        test_loss += F.nll_loss(output, target, size_average=False).data[0]  # sum up batch loss
+        test_loss += F.cross_entropy(output, target, size_average=False).data[0]  # sum up batch loss
         pred = output.data.max(1)[1]  # get the index of the max log-probability
         correct += pred.eq(target.data).cpu().sum()
 

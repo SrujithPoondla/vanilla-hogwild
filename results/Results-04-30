@@ -1,0 +1,68 @@
+With single client on AWS
+Processes=3
+PID0	Train Epoch: 0	 time: 29.46344966400102 	Loss: 0.410839
+PID2	Train Epoch: 1	 time: 56.6723786879993 	Loss: 0.253761
+PID0	Train Epoch: 1	 time: 58.65445711400207 	Loss: 0.228178
+PID1	Train Epoch: 1	 time: 60.33657628400033 	Loss: 0.196318
+PID2	Train Epoch: 2	 time: 85.1021204159988 	Loss: 0.193571
+PID0	Train Epoch: 2	 time: 87.49759551400166 	Loss: 0.161673
+PID1	Train Epoch: 2	 time: 88.806827204 	Loss: 0.131744
+PID2	Train Epoch: 3	 time: 114.63013798499924 	Loss: 0.205901
+PID0	Train Epoch: 3	 time: 116.4698999600023 	Loss: 0.163129
+PID1	Train Epoch: 3	 time: 117.9134006380009 	Loss: 0.144714
+PID2	Train Epoch: 4	 time: 142.32869667500017 	Loss: 0.167446
+PID0	Train Epoch: 4	 time: 142.76613073000226 	Loss: 0.143432
+PID1	Train Epoch: 4	 time: 144.82306218100166 	Loss: 0.118605
+PID2	Train Epoch: 5	 time: 169.3565051739988 	Loss: 0.203967
+PID0	Train Epoch: 5	 time: 170.0367933680027 	Loss: 0.172335
+PID1	Train Epoch: 5	 time: 171.7403888680019 	Loss: 0.146202
+PID2	Train Epoch: 6	 time: 200.66901703899748 	Loss: 0.176442
+PID0	Train Epoch: 6	 time: 201.32329101300274 	Loss: 0.147507
+PID1	Train Epoch: 6	 time: 202.73634080300144 	Loss: 0.110272
+PID2	Train Epoch: 7	 time: 227.84041022199744 	Loss: 0.192537
+PID0	Train Epoch: 7	 time: 227.90845194100257 	Loss: 0.195782
+PID1	Train Epoch: 7	 time: 229.4131773200006 	Loss: 0.129346
+PID2	Train Epoch: 8	 time: 257.684404323998 	Loss: 0.194817
+PID1	Train Epoch: 8	 time: 257.7776521680007 	Loss: 0.201440
+PID0	Train Epoch: 8	 time: 257.81543482000416 	Loss: 0.198056
+PID1	Train Epoch: 9	 time: 284.7729463680007 	Loss: 0.153962
+PID2	Train Epoch: 9	 time: 285.62842159499814 	Loss: 0.142846
+PID0	Train Epoch: 9	 time: 285.7990303900042 	Loss: 0.139982
+
+Processes = 2
+PID0	Train Epoch: 0	 time: 17.83180169300067 	Loss: 0.493322
+PID1	Train Epoch: 0	 time: 17.97490230100084 	Loss: 0.494199
+PID1	Train Epoch: 1	 time: 35.86563847900106 	Loss: 0.306254
+PID0	Train Epoch: 1	 time: 36.00439543799985 	Loss: 0.314028
+PID1	Train Epoch: 2	 time: 53.97273683500134 	Loss: 0.207999
+PID0	Train Epoch: 2	 time: 54.108967027999824 	Loss: 0.203940
+PID1	Train Epoch: 3	 time: 71.87564848500188 	Loss: 0.233581
+PID0	Train Epoch: 3	 time: 72.02630130800026 	Loss: 0.223696
+PID1	Train Epoch: 4	 time: 89.77899279100166 	Loss: 0.201008
+PID0	Train Epoch: 4	 time: 89.93725048800115 	Loss: 0.198952
+PID1	Train Epoch: 5	 time: 107.74289560100078 	Loss: 0.215651
+PID0	Train Epoch: 5	 time: 107.93521168100051 	Loss: 0.211091
+PID1	Train Epoch: 6	 time: 125.78523158200187 	Loss: 0.216508
+PID0	Train Epoch: 6	 time: 125.86700631199892 	Loss: 0.216226
+PID1	Train Epoch: 7	 time: 143.91579454400198 	Loss: 0.169910
+PID0	Train Epoch: 7	 time: 143.94362672299758 	Loss: 0.170564
+PID1	Train Epoch: 8	 time: 161.90785872200286 	Loss: 0.162485
+PID0	Train Epoch: 8	 time: 162.02705135699762 	Loss: 0.162321
+PID0	Train Epoch: 9	 time: 180.11827048299892 	Loss: 0.180944
+PID1	Train Epoch: 9	 time: 180.47589388000233 	Loss: 0.158393
+
+Processes = 1
+PID0	Train Epoch: 0	 time: 15.743519754998488 	Loss: 0.620427
+PID0	Train Epoch: 1	 time: 31.384829236998485 	Loss: 0.390350
+PID0	Train Epoch: 2	 time: 46.873343223998745 	Loss: 0.284839
+PID0	Train Epoch: 3	 time: 62.22501349999948 	Loss: 0.304439
+PID0	Train Epoch: 4	 time: 78.09667698200064 	Loss: 0.248733
+PID0	Train Epoch: 5	 time: 93.8901364780013 	Loss: 0.263341
+PID0	Train Epoch: 6	 time: 109.65126573500129 	Loss: 0.244298
+PID0	Train Epoch: 7	 time: 125.30721884200102 	Loss: 0.225801
+PID0	Train Epoch: 8	 time: 140.90222189100132 	Loss: 0.193918
+PID0	Train Epoch: 9	 time: 156.32532797800013 	Loss: 0.205677
+
+
+
+

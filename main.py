@@ -3,7 +3,7 @@ import argparse
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.multiprocessing as mp
+from resnet import ResNet18
 
 from train import train
 
@@ -25,6 +25,13 @@ parser.add_argument('--log-interval', type=int, default=50, metavar='N',
                     help='how many batches to wait before logging training status')
 parser.add_argument('--num-processes', type=int, default=2, metavar='N',
                     help='how many training processes to use (default: 2)')
+parser.add_argument('--nnet-arch', type=str, default='LeNet', metavar='N',
+                    help='LeNet and ResNet are supported for now')
+parser.add_argument('--hosts', type=str, default='127.0.0.1', metavar='N',
+                    help='Defaults to loopback address')
+parser.add_argument('--dataset', type=str, default='Cifar-10', metavar='N',
+                    help='Cifar-10 and Mnist are supported for now')
+
 
 class Net(nn.Module):
     def __init__(self):
@@ -64,10 +71,22 @@ class LeNet(nn.Module):
         x = self.fc2(x)
         return x
 
+
+def build_model(model_name):
+    # build network
+    if model_name == "LeNet":
+        return LeNet()
+    elif model_name == "ResNet18":
+        return ResNet18()
+    # elif model_name == "ResNet34":
+    #     return ResNet34()
+    # elif model_name == "ResNet50":
+    #     return ResNet50()
+
 if __name__ == '__main__':
     args = parser.parse_args()
     torch.manual_seed(args.seed)
-    model = LeNet()
+    model = build_model(args.nnet_arch)
 #    model.share_memory() # gradients are allocated lazily, so they are not shared here
     train(args, model)
 

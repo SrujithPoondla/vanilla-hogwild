@@ -70,7 +70,7 @@ def train(args, model):
             train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
                                                        shuffle=True)
             test_loader = torch.utils.data.DataLoader(
-                datasets.CIFAR10('./cifar10_data', train=False, transform=transforms.Compose(transform_test)),
+                datasets.CIFAR10('./cifar10_data', train=False, transform=transform_test),
                 batch_size=args.test_batch_size, shuffle=True)
 
         # Optimizer declaration

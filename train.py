@@ -75,7 +75,7 @@ def train_process(thread_num, optimizer, train_loader, model, args, shapes, db, 
         data = data[idx]
         target = target[idx]
         output = model(data)
-        loss = F.nll_loss(output, target)
+        loss = F.cross_entropy(output, target)
         loss.backward()
 
         loss_, params = optimizer.step()

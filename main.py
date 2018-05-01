@@ -62,7 +62,7 @@ class LeNet(nn.Module):
         x = x.view(-1, 4*4*50)
         x = self.fc1(x)
         x = self.fc2(x)
-        return F.log_softmax(x, dim=1)
+        return x
 
 if __name__ == '__main__':
     args = parser.parse_args()

@@ -49,7 +49,7 @@ def train(args, model):
         # Optimizer declaration
         optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
         if not p.thread_num:
-            time.sleep(5)
+            time.sleep(20)
 
         epoch_start_time = timeit.default_timer()
         for epoch in range(args.epochs):

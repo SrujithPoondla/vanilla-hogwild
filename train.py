@@ -36,6 +36,23 @@ def train(args, model):
     epoch_start_time = 0
     with pymp.Parallel(args.num_processes) as p:
         # load training and test set here:
+        normalize = transforms.Normalize(mean=[x / 255.0 for x in [125.3, 123.0, 113.9]],
+                                         std=[x / 255.0 for x in [63.0, 62.1, 66.7]])
+        transform_train = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Lambda(lambda x: F.pad(
+                Variable(x.unsqueeze(0), requires_grad=False, volatile=True),
+                (4, 4, 4, 4), mode='reflect').data.squeeze()),
+            transforms.ToPILImage(),
+            transforms.RandomCrop(32),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            normalize,
+        ])
+        # data prep for test set
+        transform_test = transforms.Compose([
+            transforms.ToTensor(),
+            normalize])
         if args.dataset == "MNIST":
             training_set = datasets.MNIST('./mnist_data', train=True, download=True,
                                           transform=transforms.Compose([
@@ -49,13 +66,12 @@ def train(args, model):
                 ])), batch_size=args.test_batch_size, shuffle=True)
         elif args.dataset == "Cifar10":
             trainset = datasets.CIFAR10(root='./cifar10_data', train=True,
-                                        download=True, transform=transforms.ToTensor())
+                                        download=True, transform=transform_train)
             train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
                                                        shuffle=True)
             test_loader = torch.utils.data.DataLoader(
-                datasets.CIFAR10('./cifar10_data', train=False, transform=transforms.Compose([
-                    transforms.ToTensor()
-                ])), batch_size=args.test_batch_size, shuffle=True)
+                datasets.CIFAR10('./cifar10_data', train=False, transform=transforms.Compose(transform_test)),
+                batch_size=args.test_batch_size, shuffle=True)
 
         # Optimizer declaration
         optimizer = SGD(model.parameters(), lr=args.lr, momentum=args.momentum)

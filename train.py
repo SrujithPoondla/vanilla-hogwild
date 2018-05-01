@@ -4,6 +4,7 @@ import time
 import pymp
 import torch
 import torch.nn.functional as F
+import redis
 from torch.autograd import Variable
 from torchvision import datasets, transforms
 from sgd import SGD
@@ -17,9 +18,11 @@ def train(args, model):
     startup_nodes = []
     for node in args.hosts.split(' '):
         startup_nodes.append({'host': str(node.split(':')[0]), "port": "6379"})
-    db = StrictRedisCluster(startup_nodes=startup_nodes, decode_responses=True)
-    # db = redis.ConnectionPool(host='localhost', port=6379, db=0)
-    # db = redis.StrictRedis(connection_pool=db)
+    if len(startup_nodes) > 2:
+        db = StrictRedisCluster(startup_nodes=startup_nodes, decode_responses=True)
+    else:
+        db = redis.ConnectionPool(host='localhost', port=6379, db=0)
+        db = redis.StrictRedis(connection_pool=db)
 
     params_exists = check_param_exists(model, db)
     if not params_exists:

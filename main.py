@@ -29,7 +29,7 @@ parser.add_argument('--nnet-arch', type=str, default='LeNet', metavar='N',
                     help='LeNet and ResNet are supported for now')
 parser.add_argument('--hosts', type=str, default='127.0.0.1', metavar='N',
                     help='Defaults to loopback address')
-parser.add_argument('--dataset', type=str, default='Cifar-10', metavar='N',
+parser.add_argument('--dataset', type=str, default='Cifar10', metavar='N',
                     help='Cifar-10 and Mnist are supported for now')
 
 

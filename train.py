@@ -31,7 +31,7 @@ def train(args, model):
     print(args.num_processes)
 
     # Using pymp to parallelise the training
-    epoch_time = 0
+    epoch_start_time = 0
     with pymp.Parallel(args.num_processes) as p:
         train_loader = torch.utils.data.DataLoader(
             datasets.MNIST('../data', train=True, download=True,
@@ -52,7 +52,7 @@ def train(args, model):
             time.sleep(5)
 
         for epoch in range(args.epochs):
-            epoch_start_time = timeit.default_timer()
+            epoch_start_time = timeit.default_timer()+epoch_start_time
             train_process(p.thread_num, optimizer, train_loader, model, args, shapes, db, epoch, epoch_start_time)
             epoch_time = epoch_time + timeit.default_timer() - epoch_start_time
             # if p.thread_num :

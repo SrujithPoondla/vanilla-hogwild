@@ -1,5 +1,7 @@
 '''ResNet in PyTorch.
+
 For Pre-activation ResNet, see 'preact_resnet.py'.
+
 Reference:
 [1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
     Deep Residual Learning for Image Recognition. arXiv:1512.03385
@@ -111,3 +113,5 @@ def ResNet101():
 
 def ResNet152():
     return ResNet(Bottleneck, [3,8,36,3])
+
+

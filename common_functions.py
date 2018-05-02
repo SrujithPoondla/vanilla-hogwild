@@ -80,6 +80,7 @@ def push_params_redis_init(model, db):
             param_data.insert(0, param_shape[1])
         else:
             param_data.insert(0,1)
+        print(param_shape)
         db.execute_command('ML.MATRIX.SET', 'param_data'+str(i), *param_data)
         # db.execute_command('ML.MATRIX.ADD', 'param_data', 'param_temp', 'param_data')
         # db.set(i, param_data)

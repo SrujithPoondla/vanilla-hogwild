@@ -3,6 +3,7 @@ import argparse
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchvision import models as models
 from torchvision import datasets, transforms
 
 from resnet import ResNet18
@@ -87,7 +88,9 @@ def build_model(model_name):
 if __name__ == '__main__':
     args = parser.parse_args()
     torch.manual_seed(args.seed)
-    model = build_model(args.nnet_arch)
+    # model = build_model(args.nnet_arch)
+    model = models.resnet18()
+    for i in list(model.parameters()): print(i.shape)
     #    model.share_memory() # gradients are allocated lazily, so they are not shared here
     train(args, model)
 

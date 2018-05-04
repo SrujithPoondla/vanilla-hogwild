@@ -16,13 +16,15 @@ from common_functions import push_params_redis, get_shapes, get_params_redis, se
 
 def train(args, model):
     startup_nodes = []
-    for node in args.hosts.split(' '):
-        startup_nodes.append({'host': str(node.split(':')[0]), "port": "6379"})
-    if len(startup_nodes) > 2:
-        db = StrictRedisCluster(startup_nodes=startup_nodes, decode_responses=True)
-    else:
-        db = redis.ConnectionPool(host='localhost', port=6379, db=0)
-        db = redis.StrictRedis(connection_pool=db)
+    # for node in args.hosts.split(' '):
+    #     startup_nodes.append({'host': str(node.split(':')[0]), "port": "6379"})
+    # if len(startup_nodes) > 2:
+    #     db = StrictRedisCluster(startup_nodes=startup_nodes, decode_responses=True)
+    # else:
+    #     db = redis.ConnectionPool(host='localhost', port=6379, db=0)
+    #     db = redis.StrictRedis(connection_pool=db)
+    startup_nodes = [{"host": "127.0.0.1", "port": "30001"},{"host": "127.0.0.1", "port": "30002"},{"host": "127.0.0.1", "port": "30003"}]
+    db = StrictRedisCluster(startup_nodes=startup_nodes, decode_responses=True)
 
     params_exists = check_param_exists(model, db)
     if not params_exists:

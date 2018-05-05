@@ -52,7 +52,8 @@ def train(args, model):
                                ])),
                 batch_size=args.batch_size, shuffle=True, num_workers=1)
             test_loader = torch.utils.data.DataLoader(
-                datasets.MNIST(root='./mnist_data', train=False, transform=transforms.Compose([
+                datasets.MNIST(root='./mnist_data', train=False,download=True,
+                               transform=transforms.Compose([
                     transforms.ToTensor(),
                     transforms.Normalize((0.1307,), (0.3081,))
                 ])),

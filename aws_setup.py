@@ -184,7 +184,7 @@ class LaunchSpecs:
     def build(self):        
         launch_specification = {
             'ImageId': self.ami, 
-            'InstanceType': self.instance_type, 
+            'InstanceType': self.instance_type,
             'KeyName': self.keypair_name,
             'NetworkInterfaces': [{
                 'DeviceIndex': 0,
@@ -198,7 +198,39 @@ class LaunchSpecs:
             }]
         }
         return launch_specification
-    
+
+
+def create_multiple_spot_instance(name, launch_specs, spot_price=None, instance_count =1):
+    create_ec2_keypair(launch_specs['KeyName'])
+    os.chdir(Path.home()/'.ssh/')
+    if spot_price is None:
+        spot_requests = ec2c.request_spot_instances(LaunchSpecification=launch_specs,
+                                                    InstanceCount=instance_count)
+    else:
+        spot_requests = ec2c.request_spot_instances(SpotPrice=spot_price, LaunchSpecification=launch_specs,
+                                                    InstanceCount=instance_count)
+
+    # return spot_requests
+    spot_requests = spot_requests['SpotInstanceRequests']
+    instance_ids = []
+    for req in spot_requests:
+        instance_ids.append(wait_on_fulfillment(req))
+        # # print(instance_id)
+    if not instance_ids:
+        return
+    print('Rebooting...')
+    instances = list(ec2.instances.filter(Filters=[{'Name': 'instance-id', 'Values': instance_ids}]))
+    for instance in instances:
+        instance.reboot()
+        instance.wait_until_running()
+        instance.create_tags(Tags=[{'Key':'Name','Value':f'{name}'}])
+        volume = list(instance.volumes.all())[0]
+        volume.create_tags(Tags=[{'Key':'Name','Value':f'{name}'}])
+        print(f'Completed. SSH: ', get_ssh_command(instance))
+    return instances
+
+
+
 def create_spot_instance(name, launch_specs, spot_price=None):
     create_ec2_keypair(launch_specs['KeyName'])
     os.chdir(Path.home()/'.ssh/')

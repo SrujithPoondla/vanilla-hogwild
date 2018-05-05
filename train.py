@@ -20,8 +20,8 @@ def train(args, model):
     db = []
     if args.is_redis:
         startup_nodes = []
-        for node in args.hosts.split(' '):
-            startup_nodes.append({'host': str(node.split(':')[0]), "port": "6379"})
+        for node in args.hosts.split(','):
+            startup_nodes.append({'host': str(node), "port": "6379"})
         if len(startup_nodes) > 2:
             db = StrictRedisCluster(startup_nodes=startup_nodes, decode_responses=True)
         else:

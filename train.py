@@ -156,9 +156,9 @@ def test_epoch(model, data_loader):
     test_loss = 0
     correct = 0
     for data, target in data_loader:
-        data, target = Variable(data, volatile=True), Variable(target)
+        data, target = Variable(data), Variable(target)
         output = model(data)
-        test_loss += F.cross_entropy(output, target, size_average=False).data[0]  # sum up batch loss
+        test_loss += F.cross_entropy(output, target, size_average=False).item()  # sum up batch loss
         pred = output.data.max(1)[1]  # get the index of the max log-probability
         correct += pred.eq(target.data).cpu().sum()
 

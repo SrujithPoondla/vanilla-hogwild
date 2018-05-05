@@ -29,11 +29,10 @@ parser.add_argument('--nnet-arch', type=str, default='LeNet', metavar='N',
                     help='LeNet and ResNet are supported for now')
 parser.add_argument('--hosts', type=str, default='127.0.0.1', metavar='N',
                     help='Defaults to loopback address')
-parser.add_argument('--dataset', type=str, default='cifar10', metavar='N',
+parser.add_argument('--dataset', type=str, default='MNIST', metavar='N',
                     help='Cifar-10 and MNIST are supported for now')
 parser.add_argument('--is-redis', type=bool, default=True, metavar='N',
                     help='Cifar-10 and MNIST are supported for now')
-
 
 
 def build_model(model_name, dataset):

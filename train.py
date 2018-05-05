@@ -16,7 +16,7 @@ from common_functions import push_params_redis, get_shapes, get_params_redis, se
 
 
 def train(args, model):
-
+    # args.hosts = '10.0.0.14,10.0.0.12,10.0.0.11'
     db = []
     if args.is_redis:
         startup_nodes = []
@@ -45,14 +45,14 @@ def train(args, model):
 
         if args.dataset == "MNIST":
             train_loader = torch.utils.data.DataLoader(
-                datasets.MNIST('../data', train=True, download=True,
+                datasets.MNIST(root='./mnist_data', train=True, download=True,
                                transform=transforms.Compose([
                                    transforms.ToTensor(),
                                    transforms.Normalize((0.1307,), (0.3081,))
                                ])),
                 batch_size=args.batch_size, shuffle=True, num_workers=1)
             test_loader = torch.utils.data.DataLoader(
-                datasets.MNIST('../data', train=False, transform=transforms.Compose([
+                datasets.MNIST(root='./mnist_data', train=False, transform=transforms.Compose([
                     transforms.ToTensor(),
                     transforms.Normalize((0.1307,), (0.3081,))
                 ])),

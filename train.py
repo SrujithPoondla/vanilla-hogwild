@@ -37,7 +37,7 @@ def train(args, model):
     shapes = get_shapes(model)
 
     # Print total number of processes
-    print(args.num_processes)
+    print('Num process in each node: '+ str(args.num_processes))
 
     # Using pymp to parallelise the training
     epoch_start_time = 0
@@ -63,7 +63,7 @@ def train(args, model):
             transform_train = transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Lambda(lambda x: F.pad(
-                    Variable(x.unsqueeze(0), requires_grad=False, volatile=True),
+                    Variable(x.unsqueeze(0), requires_grad=False),
                     (4, 4, 4, 4), mode='reflect').data.squeeze()),
                 transforms.ToPILImage(),
                 transforms.RandomCrop(32),
@@ -130,7 +130,7 @@ def train_process(thread_num, optimizer, train_loader, model, args, shapes, db, 
         if batch_idx % args.log_interval == 0:
             print('{}\tTrain Epoch: {} [{}/{} ({:.0f}%)]\ttime: {}\tLoss: {:.6f}'.format(
                 thread_num, epoch, batch_idx * len(data), len(train_loader.dataset),
-                            100. * batch_idx / len(train_loader), timeit.default_timer()-epoch_start_time, loss.data[0]))
+                            100. * batch_idx / len(train_loader), timeit.default_timer()-epoch_start_time, loss.item()))
 
     # return loss.data[0]
 

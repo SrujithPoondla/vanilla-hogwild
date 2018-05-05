@@ -53,7 +53,8 @@ def build_model(model_name, dataset):
 if __name__ == '__main__':
     args = parser.parse_args()
     torch.manual_seed(args.seed)
-    model = build_model(args.nnet_arch,args.dataset)
+    print(args.nnet_arch,args.dataset)
+    model = build_model(args.nnet_arch, args.dataset)
     # model = models.resnet18()
     # for i in list(model.parameters()): print(i.shape)
     #    model.share_memory() # gradients are allocated lazily, so they are not shared here

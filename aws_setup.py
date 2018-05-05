@@ -354,7 +354,7 @@ class TmuxSession:
     def __init__(self, client, name):
         self.client = client
         self.name = name
-        out, _ = run_command(client, f'tmux new-session -s {name} -n 0 -d')
+        out, _ = run_command(client, f'tmux new-session -s {name} -d')
         if out and 'duplicate session' in out:
             self.attach()
         self.windows = [f'{self.name}:0']

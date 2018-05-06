@@ -164,6 +164,7 @@ def get_params_redis(db, shapes):
         # print(shape)
         for slice in range(count_slices(shape)):
             if len(shape) >= 2:
+                param = []
                 try:
                     param = db.execute_command('ML.MATRIX.GET', 'param_data' + str(i) + str(slice))
                 except Exception as e:
@@ -174,6 +175,7 @@ def get_params_redis(db, shapes):
                 # print(slice.shape)
                 slices.append(slice)
             else:
+                param =[]
                 try:
                     param = db.execute_command('ML.MATRIX.GET', 'param_data' + str(i))
                 except Exception as e:

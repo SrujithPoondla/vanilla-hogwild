@@ -23,7 +23,7 @@ def train(args, model):
         for node in args.hosts.split(','):
             startup_nodes.append({'host': str(node), "port": "6379"})
         if len(startup_nodes) > 2:
-            db = StrictRedisCluster(startup_nodes=startup_nodes, decode_responses=True)
+            db = StrictRedisCluster(startup_nodes=startup_nodes[:3], decode_responses=True)
         else:
             db = redis.ConnectionPool(host='localhost', port=6379, db=0)
             db = redis.StrictRedis(connection_pool=db)
@@ -39,25 +39,23 @@ def train(args, model):
     # Print total number of processes
     print('Num process in each node: '+ str(args.num_processes))
 
+    training_set = datasets.MNIST('./mnist_data', train=True, download=True,
+                                  transform=transforms.Compose([
+                                      transforms.ToTensor(),
+                                      transforms.Normalize((0.1307,), (0.3081,))]))
+    test_set = datasets.MNIST('./mnist_data', train=False, transform=transforms.Compose([
+                    transforms.ToTensor(),
+                    transforms.Normalize((0.1307,), (0.3081,))
+                ]))
+
     # Using pymp to parallelise the training
     epoch_start_time = 0
     with pymp.Parallel(args.num_processes) as p:
 
         if args.dataset == "MNIST":
-            train_loader = torch.utils.data.DataLoader(
-                datasets.MNIST(root='./mnist_data', train=True, download=True,
-                               transform=transforms.Compose([
-                                   transforms.ToTensor(),
-                                   transforms.Normalize((0.1307,), (0.3081,))
-                               ])),
-                batch_size=args.batch_size, shuffle=True, num_workers=1)
-            test_loader = torch.utils.data.DataLoader(
-                datasets.MNIST(root='./mnist_data', train=False,download=True,
-                               transform=transforms.Compose([
-                    transforms.ToTensor(),
-                    transforms.Normalize((0.1307,), (0.3081,))
-                ])),
-                batch_size=args.batch_size, shuffle=True, num_workers=1)
+
+            train_loader = torch.utils.data.DataLoader(training_set, batch_size=args.batch_size, shuffle=True)
+            test_loader = torch.utils.data.DataLoader(test_set, batch_size=args.test_batch_size, shuffle=True)
             print(str(p.thread_num)+' acquired dataset')
         elif args.dataset == "cifar10":
             normalize = transforms.Normalize(mean=[x / 255.0 for x in [125.3, 123.0, 113.9]],

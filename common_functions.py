@@ -95,7 +95,10 @@ def push_params_redis_init(model, db):
             # db.execute_command('ML.MATRIX.SET', 'param_data' + str(i), *param_data)
             # db.execute_command('ML.MATRIX.ADD', 'param_data', 'param_temp', 'param_data')
             # db.set(i, param_data)
-    pipe.execute()
+    try:
+        pipe.execute()
+    except Exception as e:
+        print(e)
     # print("pushed params : "+str(timeit.default_timer()-start_push_time))
 
 
@@ -144,7 +147,10 @@ def push_params_redis(params, db):
             # db.execute_command('ML.MATRIX.SET', 'param_data' + str(i), *param_data)
             # db.execute_command('ML.MATRIX.ADD', 'param_data', 'param_temp', 'param_data')
             # db.set(i, param_data)
-    pipe.execute()
+    try:
+        pipe.execute()
+    except Exception as e:
+        print(e)
     # print("pushed params : "+str(timeit.default_timer()-start_push_time))
 
 
@@ -158,14 +164,20 @@ def get_params_redis(db, shapes):
         # print(shape)
         for slice in range(count_slices(shape)):
             if len(shape) >= 2:
-                param = db.execute_command('ML.MATRIX.GET', 'param_data' + str(i) + str(slice))
+                try:
+                    param = db.execute_command('ML.MATRIX.GET', 'param_data' + str(i) + str(slice))
+                except Exception as e:
+                    print('ML.MATRIX.GET', 'param_data' + str(i) + str(slice))
                 # print('param_data' + str(i) + str(slice))
                 param = param[2:]
                 slice = convert_list_to_mat(param, shape)
                 # print(slice.shape)
                 slices.append(slice)
             else:
-                param = db.execute_command('ML.MATRIX.GET', 'param_data' + str(i))
+                try:
+                    param = db.execute_command('ML.MATRIX.GET', 'param_data' + str(i))
+                except Exception as e:
+                    print('ML.MATRIX.GET', 'param_data' + str(i))
                 # print('param_data' + str(i))
                 pshape = param[:2]
                 param = param[2:]

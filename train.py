@@ -58,6 +58,7 @@ def train(args, model):
                     transforms.Normalize((0.1307,), (0.3081,))
                 ])),
                 batch_size=args.batch_size, shuffle=True, num_workers=1)
+            print(str(p.thread_num)+' acquired dataset')
         elif args.dataset == "cifar10":
             normalize = transforms.Normalize(mean=[x / 255.0 for x in [125.3, 123.0, 113.9]],
                                              std=[x / 255.0 for x in [63.0, 62.1, 66.7]])
@@ -94,7 +95,9 @@ def train(args, model):
             optimizer = sgd.SGD(model.parameters(), lr = args.lr, momentum= args.momentum)
 
         if not p.thread_num:
+            print(str(p.thread_num)+ 'went to sleep')
             time.sleep(20)
+            print(str(p.thread_num)+ 'woke up from sleep')
 
         epoch_start_time = timeit.default_timer()
         for epoch in range(args.epochs):

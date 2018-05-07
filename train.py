@@ -16,14 +16,14 @@ from common_functions import push_params_redis, get_shapes, get_params_redis, se
 
 
 def train(args, model):
-    # args.hosts = '10.0.0.14,10.0.0.12,10.0.0.11'
+    # args.hosts="10.0.0.13,10.0.0.14,10.0.0.9,10.0.0.12,10.0.0.6,10.0.0.7,10.0.0.4,10.0.0.5"
     db = []
     if args.is_redis:
         startup_nodes = []
         for node in args.hosts.split(','):
             startup_nodes.append({'host': str(node), "port": "6379"})
         if len(startup_nodes) > 2:
-            db = StrictRedisCluster(startup_nodes=startup_nodes[:3], decode_responses=True)
+            db = StrictRedisCluster(startup_nodes=startup_nodes[:3], decode_responses=True, password='lsmldeeplearning')
         else:
             db = redis.ConnectionPool(host='localhost', port=6379, db=0)
             db = redis.StrictRedis(connection_pool=db)

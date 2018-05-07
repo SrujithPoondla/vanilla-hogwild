@@ -39,8 +39,7 @@ def create_ec2_keypair(name):
     keypair_name = f'{name}'
     filename = ssh_dir/f'{name}.pem'
     if filename.exists():
-        print('Keypair exists')
-        return
+        os.remove(filename)
     keypair = ec2.create_key_pair(KeyName=keypair_name)
     keypair_out = keypair.key_material
     outfile = open(filename,'w')

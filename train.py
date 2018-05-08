@@ -8,6 +8,7 @@ import redis
 from torch.autograd import Variable
 from torchvision import datasets, transforms
 from sgd import SGD
+import Datasets
 from rediscluster import StrictRedisCluster
 from torch.optim import sgd
 
@@ -39,11 +40,11 @@ def train(args, model):
     # Print total number of processes
     print('Num process in each node: '+ str(args.num_processes))
     if args.dataset == 'MNIST':
-        training_set = datasets.MNIST('./mnist_data', train=True, download=True,
+        training_set = Datasets.MNIST('./mnist_data', train=True, download=True,
                                       transform=transforms.Compose([
                                           transforms.ToTensor(),
                                           transforms.Normalize((0.1307,), (0.3081,))]))
-        test_set = datasets.MNIST('./mnist_data', train=False, transform=transforms.Compose([
+        test_set = Datasets.MNIST('./mnist_data', train=False, transform=transforms.Compose([
                         transforms.ToTensor(),
                         transforms.Normalize((0.1307,), (0.3081,))
                     ]))
@@ -68,10 +69,10 @@ def train(args, model):
             normalize])
 
         # load training and test set here:
-        training_set = datasets.CIFAR10(root='./cifar10_data', train=True,
+        training_set = Datasets.CIFAR10(root='./cifar10_data', train=True,
                                         download=True, transform=transform_train)
 
-        test_set = datasets.CIFAR10(root='./cifar10_data', train=False,
+        test_set = Datasets.CIFAR10(root='./cifar10_data', train=False,
                                download=True, transform=transform_test)
         print(len(training_set), len(test_set))
 

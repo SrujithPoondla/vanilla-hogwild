@@ -38,15 +38,42 @@ def train(args, model):
 
     # Print total number of processes
     print('Num process in each node: '+ str(args.num_processes))
+    if args.dataset == 'MNIST':
+        training_set = datasets.MNIST('./mnist_data', train=True, download=True,
+                                      transform=transforms.Compose([
+                                          transforms.ToTensor(),
+                                          transforms.Normalize((0.1307,), (0.3081,))]))
+        test_set = datasets.MNIST('./mnist_data', train=False, transform=transforms.Compose([
+                        transforms.ToTensor(),
+                        transforms.Normalize((0.1307,), (0.3081,))
+                    ]))
+        print(len(training_set), len(test_set))
+    elif args.dataset == 'cifar10':
+        normalize = transforms.Normalize(mean=[x / 255.0 for x in [125.3, 123.0, 113.9]],
+                                         std=[x / 255.0 for x in [63.0, 62.1, 66.7]])
+        transform_train = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Lambda(lambda x: F.pad(
+                Variable(x.unsqueeze(0), requires_grad=False),
+                (4, 4, 4, 4), mode='reflect').data.squeeze()),
+            transforms.ToPILImage(),
+            transforms.RandomCrop(32),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            normalize,
+        ])
+        # data prep for test set
+        transform_test = transforms.Compose([
+            transforms.ToTensor(),
+            normalize])
 
-    training_set = datasets.MNIST('./mnist_data', train=True, download=True,
-                                  transform=transforms.Compose([
-                                      transforms.ToTensor(),
-                                      transforms.Normalize((0.1307,), (0.3081,))]))
-    test_set = datasets.MNIST('./mnist_data', train=False, transform=transforms.Compose([
-                    transforms.ToTensor(),
-                    transforms.Normalize((0.1307,), (0.3081,))
-                ]))
+        # load training and test set here:
+        training_set = datasets.CIFAR10(root='./cifar10_data', train=True,
+                                        download=True, transform=transform_train)
+
+        test_set = datasets.CIFAR10(root='./cifar10_data', train=False,
+                               download=True, transform=transform_test)
+        print(len(training_set), len(test_set))
 
     # Using pymp to parallelise the training
     epoch_start_time = 0
@@ -58,33 +85,12 @@ def train(args, model):
             test_loader = torch.utils.data.DataLoader(test_set, batch_size=args.test_batch_size, shuffle=True)
             print(str(p.thread_num)+' acquired dataset')
         elif args.dataset == "cifar10":
-            normalize = transforms.Normalize(mean=[x / 255.0 for x in [125.3, 123.0, 113.9]],
-                                             std=[x / 255.0 for x in [63.0, 62.1, 66.7]])
-            transform_train = transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Lambda(lambda x: F.pad(
-                    Variable(x.unsqueeze(0), requires_grad=False),
-                    (4, 4, 4, 4), mode='reflect').data.squeeze()),
-                transforms.ToPILImage(),
-                transforms.RandomCrop(32),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                normalize,
-            ])
-            # data prep for test set
-            transform_test = transforms.Compose([
-                transforms.ToTensor(),
-                normalize])
-            # load training and test set here:
-            training_set = datasets.CIFAR10(root='./cifar10_data', train=True,
-                                            download=True, transform=transform_train)
+
             train_loader = torch.utils.data.DataLoader(training_set, batch_size=args.batch_size,
                                                        shuffle=True)
-            testset = datasets.CIFAR10(root='./cifar10_data', train=False,
-                                       download=True, transform=transform_test)
-            test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size,
+            test_loader = torch.utils.data.DataLoader(test_set, batch_size=args.test_batch_size,
                                                       shuffle=False)
-
+        print(len(training_set), len(test_set))
 
         # Optimizer declaration
         if args.is_redis:

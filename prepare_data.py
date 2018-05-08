@@ -15,7 +15,7 @@ parser.add_argument('--node-num', type =int, default=1, metavar='N',
                     help='number of the current node')
 
 def prepare_data(dataset, node_num,curr_node):
-    if dataset is 'MNIST':
+    if dataset=='MNIST':
         training_set = Datasets.MNIST('./mnist_data', train=True, download=True,
                              transform=transforms.Compose([
                                           transforms.ToTensor(),
@@ -26,7 +26,7 @@ def prepare_data(dataset, node_num,curr_node):
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))]))
         print(len(training_set), len(test_set))
-    elif dataset is 'cifar10':
+    elif dataset=='cifar10':
         normalize = transforms.Normalize(mean=[x / 255.0 for x in [125.3, 123.0, 113.9]],
                                          std=[x / 255.0 for x in [63.0, 62.1, 66.7]])
         transform_train = transforms.Compose([

@@ -11,9 +11,10 @@ from sgd import SGD
 import Datasets
 from rediscluster import StrictRedisCluster
 from torch.optim import sgd
-
 from common_functions import push_params_redis, get_shapes, get_params_redis, set_params, push_params_redis_init, \
     check_param_exists
+
+
 
 
 def train(args, model):
@@ -70,10 +71,12 @@ def train(args, model):
 
         # load training and test set here:
         training_set = Datasets.CIFAR10(root='./cifar10_data', train=True,
-                                        download=True, transform=transform_train)
+                                        download=True, transform=transform_train, num_nodes=args.n_nodes,
+                                        curr_node=args.curr_node)
 
         test_set = Datasets.CIFAR10(root='./cifar10_data', train=False,
-                               download=True, transform=transform_test)
+                               download=True, transform=transform_test, num_nodes=args.n_nodes,
+                                    curr_node=args.curr_node)
         print(len(training_set), len(test_set))
 
     # Using pymp to parallelise the training

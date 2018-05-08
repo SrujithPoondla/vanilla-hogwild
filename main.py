@@ -29,10 +29,14 @@ parser.add_argument('--nnet-arch', type=str, default='LeNet', metavar='N',
                     help='LeNet and ResNet are supported for now')
 parser.add_argument('--hosts', type=str, default='127.0.0.1', metavar='N',
                     help='Defaults to loopback address')
-parser.add_argument('--dataset', type=str, default='MNIST', metavar='N',
+parser.add_argument('--dataset', type=str, default='cifar10', metavar='N',
                     help='Cifar-10 and MNIST are supported for now')
-parser.add_argument('--is-redis', type=bool, default=True, metavar='N',
-                    help='Cifar-10 and MNIST are supported for now')
+parser.add_argument('--is-redis', type=bool, default=False, metavar='N',
+                    help='Redis and without are supported')
+parser.add_argument('--n-nodes', type=int, default=3, metavar='N',
+                    help='No.of Nodes in Cluster')
+parser.add_argument('--curr-node', type=int, default=1, metavar='N',
+                    help='Current Node number')
 
 
 def build_model(model_name, dataset):

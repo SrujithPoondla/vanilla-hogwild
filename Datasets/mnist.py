@@ -36,13 +36,12 @@ class MNIST(data.Dataset):
     test_file = 'test.pt'
 
     def __init__(self, root, train=True, transform=None, target_transform=None, download=False,
-                 num_nodes=1, curr_node=1):
+                 num_nodes=1):
         self.root = os.path.expanduser(root)
         self.transform = transform
         self.target_transform = target_transform
         self.train = train  # training set or test set
         self.num_nodes = num_nodes
-        self.curr_node = curr_node
 
         if download:
             self.download()
@@ -51,12 +50,12 @@ class MNIST(data.Dataset):
             raise RuntimeError('Dataset not found.' +
                                ' You can use download=True to download it')
 
-        if self.train:
-            self.train_data, self.train_labels = torch.load(
-                os.path.join(self.root, self.processed_folder, self.training_file))
-        else:
-            self.test_data, self.test_labels = torch.load(
-                os.path.join(self.root, self.processed_folder, self.test_file))
+        # if self.train:
+        #     self.train_data, self.train_labels = torch.load(
+        #         os.path.join(self.root, self.processed_folder, self.training_file))
+        # else:
+        #     self.test_data, self.test_labels = torch.load(
+        #         os.path.join(self.root, self.processed_folder, self.test_file))
 
     def __getitem__(self, index):
         """
@@ -104,7 +103,6 @@ class MNIST(data.Dataset):
         # download files
         try:
             os.makedirs(os.path.join(self.root, self.raw_folder))
-            os.makedirs(os.path.join(self.root, self.processed_folder))
         except OSError as e:
             if e.errno == errno.EEXIST:
                 pass
@@ -128,18 +126,30 @@ class MNIST(data.Dataset):
 
         training_set = (
             read_image_file(os.path.join(self.root, self.raw_folder, 'train-images-idx3-ubyte'),
-                            self.num_nodes, self.curr_node),
+                            self.num_nodes),
             read_label_file(os.path.join(self.root, self.raw_folder, 'train-labels-idx1-ubyte'),
-                            self.num_nodes, self.curr_node)
+                            self.num_nodes)
         )
         test_set = (
-            read_image_file(os.path.join(self.root, self.raw_folder, 't10k-images-idx3-ubyte'),1,1),
-            read_label_file(os.path.join(self.root, self.raw_folder, 't10k-labels-idx1-ubyte'),1,1)
+            read_image_file(os.path.join(self.root, self.raw_folder, 't10k-images-idx3-ubyte'),1),
+            read_label_file(os.path.join(self.root, self.raw_folder, 't10k-labels-idx1-ubyte'),1)
         )
-        with open(os.path.join(self.root, self.processed_folder, self.training_file), 'wb') as f:
-            torch.save(training_set, f)
-        with open(os.path.join(self.root, self.processed_folder, self.test_file), 'wb') as f:
-            torch.save(test_set, f)
+        ts, ls=training_set
+        print(len(ts),len(ls))
+        for i,tset in enumerate(ts):
+            processed_folder = self.processed_folder + '-'+str(i+1)
+            # download files
+            try:
+                os.makedirs(os.path.join(self.root, processed_folder))
+            except OSError as e:
+                if e.errno == errno.EEXIST:
+                    pass
+                else:
+                    raise
+            with open(os.path.join(self.root, processed_folder, self.training_file), 'wb') as f:
+                torch.save((ts[i], ls[i]), f)
+            with open(os.path.join(self.root, processed_folder, self.test_file), 'wb') as f:
+                torch.save(test_set, f)
 
         print('Done!')
 
@@ -178,7 +188,7 @@ def parse_byte(b):
     return b
 
 
-def read_label_file(path, num_nodes, curr_node):
+def read_label_file(path, num_nodes):
     with open(path, 'rb') as f:
         data = f.read()
         assert get_int(data[:4]) == 2049
@@ -189,14 +199,18 @@ def read_label_file(path, num_nodes, curr_node):
             data_len = int(length / num_nodes)
         else:
             data_len = length
-        if num_nodes == curr_node:
-            labels = labels[data_len*(curr_node-1):length]
-        else:
-            labels = labels[data_len*(curr_node-1):data_len*curr_node]
-        return torch.LongTensor(labels)
+        ls = []
+        for curr_node in range(num_nodes):
+            curr_node = curr_node + 1;
+            if num_nodes == curr_node:
+                labels = labels[data_len*(curr_node-1):length]
+            else:
+                labels = labels[data_len*(curr_node-1):data_len*curr_node]
+            ls.append(torch.LongTensor(labels))
+        return ls
 
 
-def read_image_file(path, num_nodes, curr_node):
+def read_image_file(path, num_nodes):
     with open(path, 'rb') as f:
         data = f.read()
         assert get_int(data[:4]) == 2051
@@ -219,8 +233,13 @@ def read_image_file(path, num_nodes, curr_node):
             data_len = int(length / num_nodes)
         else:
             data_len = length
-        if num_nodes == curr_node:
-            images = images[data_len*(curr_node-1):length]
-        else:
-            images = images[data_len*(curr_node-1):data_len*curr_node]
-        return torch.ByteTensor(images).view(-1, 28, 28)
+        ts = []
+        for curr_node in range(num_nodes):
+            temp_node = curr_node + 1
+            if num_nodes == temp_node:
+                images = images[data_len*(temp_node-1):length]
+            else:
+                images = images[data_len*(temp_node-1):data_len*temp_node]
+            ts.append(torch.ByteTensor(images).view(-1, 28, 28))
+        print(len(ts))
+        return ts

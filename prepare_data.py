@@ -1,6 +1,5 @@
 from __future__ import print_function
 import argparse
-import Datasets
 from torchvision import datasets, transforms
 import torch.nn.functional as F
 from torch.autograd import Variable
@@ -16,12 +15,12 @@ parser.add_argument('--node-num', type=int, default=1, metavar='N',
 
 def prepare_data(dataset, node_num):
     if dataset == 'MNIST':
-        training_set = Datasets.MNIST('./mnist_data', train=True, download=True,
+        training_set = datasets.MNIST('./mnist_data', train=True, download=True,
                                       transform=transforms.Compose([
                                           transforms.ToTensor(),
                                           transforms.Normalize((0.1307,), (0.3081,))]),
                                       num_nodes=node_num)
-        test_set = Datasets.MNIST('./mnist_data', train=False, transform=transforms.Compose([
+        test_set = datasets.MNIST('./mnist_data', train=False, transform=transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))]))
         print(len(training_set), len(test_set))

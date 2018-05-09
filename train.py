@@ -36,7 +36,7 @@ def train(args, model):
 
         params_exists = check_param_exists(model, db)
         if not params_exists:
-            push_params_redis_init(model, db, args)
+            push_params_redis_init(model, db)
 
     shapes = get_shapes(model)
 

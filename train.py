@@ -21,6 +21,7 @@ from common_functions import push_params_redis, get_shapes, get_params_redis, se
 def train(args, model):
     # args.hosts="10.0.0.13,10.0.0.14,10.0.0.9,10.0.0.12,10.0.0.6,10.0.0.7,10.0.0.4,10.0.0.5"
     db = []
+    pymp.config.nested = True
     if args.is_redis:
         startup_nodes = []
         for node in args.hosts.split(','):
@@ -35,7 +36,7 @@ def train(args, model):
 
         params_exists = check_param_exists(model, db)
         if not params_exists:
-            push_params_redis_init(model,db)
+            push_params_redis_init(model, db, args)
 
     shapes = get_shapes(model)
 
@@ -86,39 +87,39 @@ def train(args, model):
 
     # Using pymp to parallelise the training
     epoch_start_time = 0
-    with pymp.Parallel(args.num_processes) as p:
+    # with pymp.Parallel(args.num_processes) as p:
 
-        if args.dataset == "MNIST":
+    if args.dataset == "MNIST":
 
-            train_loader = torch.utils.data.DataLoader(training_set, batch_size=args.batch_size, shuffle=True)
-            test_loader = torch.utils.data.DataLoader(test_set, batch_size=args.test_batch_size, shuffle=True)
-            print(str(p.thread_num)+' acquired dataset')
-        elif args.dataset == "cifar10":
+        train_loader = torch.utils.data.DataLoader(training_set, batch_size=args.batch_size, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_set, batch_size=args.test_batch_size, shuffle=True)
+        # print(str(p.thread_num)+' acquired dataset')
+    elif args.dataset == "cifar10":
 
-            train_loader = torch.utils.data.DataLoader(training_set, batch_size=args.batch_size,
-                                                       shuffle=True)
-            test_loader = torch.utils.data.DataLoader(test_set, batch_size=args.test_batch_size,
-                                                      shuffle=False)
-        print(len(training_set), len(test_set))
+        train_loader = torch.utils.data.DataLoader(training_set, batch_size=args.batch_size,
+                                                   shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_set, batch_size=args.test_batch_size,
+                                                  shuffle=False)
+    print(len(training_set), len(test_set))
 
-        # Optimizer declaration
-        if args.is_redis:
-            optimizer = SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
-        else:
-            optimizer = sgd.SGD(model.parameters(), lr = args.lr, momentum= args.momentum)
+    # Optimizer declaration
+    if args.is_redis:
+        optimizer = SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
+    else:
+        optimizer = sgd.SGD(model.parameters(), lr = args.lr, momentum= args.momentum)
 
-        if not p.thread_num:
-            print(str(p.thread_num)+ 'went to sleep')
-            time.sleep(20)
-            print(str(p.thread_num)+ 'woke up from sleep')
+    # if not p.thread_num:
+    #     print(str(p.thread_num)+ 'went to sleep')
+    #     time.sleep(20)
+    #     print(str(p.thread_num)+ 'woke up from sleep')
 
-        epoch_start_time = timeit.default_timer()
-        for epoch in range(args.epochs):
-            train_process(p.thread_num, optimizer, train_loader, model, args, shapes, db, epoch, epoch_start_time)
-            # if p.thread_num :
-            # print('PID{}\tTrain Epoch: {}\t time: {} \tLoss: {:.6f}'.format(p.thread_num, epoch, epoch_time, loss))
-            test_epoch(model, test_loader)
-            # print('PID{}\tTrain Epoch: {}\t time: {} \tLoss: {:.6f}'.format(p.thread_num, epoch, epoch_time, test_loss))
+    epoch_start_time = timeit.default_timer()
+    for epoch in range(args.epochs):
+        train_process(1, optimizer, train_loader, model, args, shapes, db, epoch, epoch_start_time)
+        # if p.thread_num :
+        # print('PID{}\tTrain Epoch: {}\t time: {} \tLoss: {:.6f}'.format(p.thread_num, epoch, epoch_time, loss))
+        test_epoch(model, test_loader)
+        # print('PID{}\tTrain Epoch: {}\t time: {} \tLoss: {:.6f}'.format(p.thread_num, epoch, epoch_time, test_loss))
 
 
 def shuffle_tensor(tensor):
